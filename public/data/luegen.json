@@ -1,0 +1,62 @@
+[
+  {
+    "title": "Wer lügt?",
+    "story": "Zehn Aussagen erscheinen auf alten Monitoren. Vor jeder Aussage steht ein 4-stelliger Code. Findet die gelogene Aussage und gebt genau diesen Code im Code-Terminal ein, um die nächste Tür zu öffnen.",
+    "instruction": "Nicht anklicken: Nur den Code der gelogenen Aussage eingeben.",
+    "statements": [
+      {
+        "code": "1842",
+        "text": "Der Raum wurde zuletzt um 18:42 Uhr betreten.",
+        "isLie": false
+      },
+      {
+        "code": "7391",
+        "text": "Das rote Kabel muss als letztes getrennt werden.",
+        "isLie": false
+      },
+      {
+        "code": "5028",
+        "text": "Der Tresor öffnet sich nur mit Symbolen, nicht mit Zahlen.",
+        "isLie": false
+      },
+      {
+        "code": "9164",
+        "text": "Die Kamera über der Tür ist nur eine Attrappe.",
+        "isLie": false
+      },
+      {
+        "code": "2719",
+        "text": "Alle Hinweise in diesem Raum sind komplett nutzlos.",
+        "isLie": true
+      },
+      {
+        "code": "6403",
+        "text": "Manche Fake-Seiten enthalten echte Hinweise.",
+        "isLie": false
+      },
+      {
+        "code": "8530",
+        "text": "Der Teamchef sieht in der Bombenrunde andere Informationen als die Helfer.",
+        "isLie": false
+      },
+      {
+        "code": "4286",
+        "text": "Nicht jede sichtbare Zahl ist automatisch ein Türcode.",
+        "isLie": false
+      },
+      {
+        "code": "3957",
+        "text": "Ein falscher Code kostet Zeit.",
+        "isLie": false
+      },
+      {
+        "code": "0674",
+        "text": "Im Finale spielt jeder gegen jeden.",
+        "isLie": false
+      }
+    ],
+    "answerCode": "2719",
+    "answer": "2719",
+    "explanation": "Die gelogene Aussage ist: „Alle Hinweise in diesem Raum sind komplett nutzlos.“ Einige Fake-Seiten enthalten echte Hinweise. Darum ist 2719 der richtige Türcode."
+  }
+]

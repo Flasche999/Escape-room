@@ -16,6 +16,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 const files = {
   questions: 'fragen.json',
   symbolSafe: 'runde2_symbole.json',
+  symbolFakePages: 'runde2_fakepages.json',
   images: 'bilder.json',
   sounds: 'sounds.json',
   lies: 'luegen.json',
@@ -50,6 +51,16 @@ function alphabetCode(word){
 function finalMemoryCode(memory){
   const cards = [...(memory.codeCards || [])].sort((a,b)=>(Number(a.number)||0)-(Number(b.number)||0));
   return memory.autoGenerateFinalCode !== false ? cards.map(c=>String(c.value||'')).join('') : String(memory.finalCode || '');
+}
+
+function lieCodeForCurrentItem(){
+  const item = (S.data.lies || [])[S.itemIndex] || {};
+  if(item.answerCode) return String(item.answerCode);
+  if(item.liarCode) return String(item.liarCode);
+  const statements = item.statements || [];
+  const lie = statements.find(x => x && typeof x === 'object' && (x.isLie === true || x.correct === true || x.lie === true));
+  if(lie && lie.code) return String(lie.code);
+  return String(item.answer || item.liar || item.code || '');
 }
 
 let data = loadData();
@@ -203,7 +214,8 @@ io.on('connection', socket => {
     if(!S.gameStarted) return;
     const lock = (S.data.codes||[]).find(c=>c.id===id);
     if(!lock) return;
-    const ok = String(code||'').trim().toUpperCase() === String(lock.code||'').trim().toUpperCase();
+    const expected = (lock.type === 'lie_code' || lock.id === 'tuer4_luege') ? lieCodeForCurrentItem() : lock.code;
+    const ok = String(code||'').trim().toUpperCase() === String(expected||'').trim().toUpperCase();
     if(ok){
       if(lock.requireAllPlayers){ S.codeEntries[id] = S.codeEntries[id] || {}; S.codeEntries[id][socket.id]=true; if(S.players.length && S.players.every(p=>S.codeEntries[id]?.[p.id])) unlock(id); }
       else unlock(id);
@@ -258,7 +270,7 @@ io.on('connection', socket => {
     }
     broadcast();
   });
-  socket.on('player:lieGuess', choice => {
+  socket.on('player:lieGuess', choice => { // alt: nicht mehr in der Oberfläche genutzt
     if(!S.gameStarted || S.round !== 4) return;
     const item = (S.data.lies || [])[S.itemIndex] || {};
     const expected = String(item.answer || item.liar || '').trim().toUpperCase();

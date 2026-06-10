@@ -1,0 +1,58 @@
+{
+  "title": "Der Symbol-Tresor",
+  "story": "Findet mit den Fake-Seiten/Hinweisen die richtige Symbolfolge. Diese Runde ist unabhängig von Runde 1.",
+  "symbols": [
+    {
+      "id": "waechter",
+      "icon": "🛡️",
+      "label": "Wächter"
+    },
+    {
+      "id": "schluessel",
+      "icon": "🗝️",
+      "label": "Schlüssel"
+    },
+    {
+      "id": "uhr",
+      "icon": "🕛",
+      "label": "Uhr"
+    },
+    {
+      "id": "tuer",
+      "icon": "🚪",
+      "label": "Tür"
+    },
+    {
+      "id": "auge",
+      "icon": "👁️",
+      "label": "Auge"
+    },
+    {
+      "id": "mond",
+      "icon": "🌙",
+      "label": "Mond"
+    },
+    {
+      "id": "flamme",
+      "icon": "🔥",
+      "label": "Flamme"
+    },
+    {
+      "id": "buch",
+      "icon": "📕",
+      "label": "Buch"
+    },
+    {
+      "id": "krone",
+      "icon": "👑",
+      "label": "Krone"
+    }
+  ],
+  "sequence": [
+    "waechter",
+    "schluessel",
+    "uhr",
+    "tuer"
+  ],
+  "adminExplanation": "Die Standardlösung kommt nur aus den Runde-2-Fake-Seiten: Wächter > Schlüssel > Uhr > Tür. Du kannst die Hinweise in runde2_fakepages.json bearbeiten."
+}
