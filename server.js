@@ -128,7 +128,15 @@ function setRound(r){
   S.showRules = false;
   if(S.round === 5 || S.round === 6){ S.teamChefRequired = true; S.buzzerEnabled = false; }
   if(S.round === 1 || S.round === 7){ S.teamChefRequired = false; S.buzzerEnabled = false; }
-  if(S.round === 6){ S.bomb.status='bereit'; S.bomb.timer = Number(S.bomb.initialSeconds || S.data.bomb?.bombTimerSeconds || 300); S.bomb.running = true; }
+  if(S.round === 6){
+    S.bomb.status='bereit';
+    S.bomb.timer = Number(S.bomb.initialSeconds || S.data.bomb?.bombTimerSeconds || 300);
+    S.bomb.running = false;
+    S.bomb.phase = 1;
+    S.bomb.errors = 0;
+    S.bomb.wireProgress = [];
+    S.message = S.teamChefId ? 'Bombenrunde bereit. Bomben-Timer startet mit dem Teamchef.' : 'Bombenrunde bereit. Wähle zuerst einen Teamchef aus.';
+  }
   if(S.round === 7) startFinaleWarning();
   else { S.finale = { started:false, warningActive:false, acknowledgements:{} }; S.message = 'Runde ' + S.round + ' gestartet.'; }
 }
@@ -250,6 +258,23 @@ io.on('connection', socket => {
     }
     broadcast();
   });
+  socket.on('player:lieGuess', choice => {
+    if(!S.gameStarted || S.round !== 4) return;
+    const item = (S.data.lies || [])[S.itemIndex] || {};
+    const expected = String(item.answer || item.liar || '').trim().toUpperCase();
+    const selected = String(choice || '').trim().toUpperCase();
+    if(!expected || !selected) return;
+    if(selected === expected){
+      unlock('tuer4');
+      S.message = 'Richtig! Die Lüge wurde gefunden.';
+      io.emit('playSound','correct');
+    } else {
+      penalty('Falsche Auswahl bei Wer lügt!');
+      io.emit('playSound','wrong');
+    }
+    broadcast();
+  });
+
   socket.on('player:memoryFlip', n => { if(!S.gameStarted || S.round!==7 || !S.finale?.started) return; S.memory.flipped = [Number(n)]; broadcast(); });
 
   socket.on('player:finaleAck', () => {
@@ -271,6 +296,27 @@ io.on('connection', socket => {
   socket.on('admin:setGameTimer', seconds => { S.escape.initialSeconds = Math.max(60, Number(seconds||1800)); S.escape.timer = S.escape.initialSeconds; broadcast(); });
   socket.on('admin:setPenalty', seconds => { S.escape.errorPenaltySeconds = Math.max(0, Number(seconds||0)); broadcast(); });
   socket.on('admin:round', r => { if(!S.gameStarted) S.gameStarted = true; setRound(r); broadcast(); });
+  socket.on('admin:setTeamChef', id => {
+    S.teamChefId = String(id || '');
+    if(S.teamChefId){
+      const p = S.players.find(x => x.id === S.teamChefId);
+      S.message = '👑 Teamchef gesetzt: ' + (p?.name || 'Spieler');
+      if(S.round === 6){
+        S.teamChefRequired = true;
+        if(S.bomb.status === 'bereit' || S.bomb.status === 'paused'){
+          S.bomb.status = 'läuft';
+        }
+        S.bomb.running = true;
+      }
+    } else {
+      S.message = 'Teamchef entfernt.';
+      if(S.round === 6){
+        S.bomb.running = false;
+        S.bomb.status = 'bereit';
+      }
+    }
+    broadcast();
+  });
   socket.on('admin:reset', () => { fullReset(true); broadcast(); });
   socket.on('admin:rules', v => { S.showRules=!!v; broadcast(); });
   socket.on('admin:next', () => { S.itemIndex++; S.revealed=false; broadcast(); });
@@ -295,6 +341,7 @@ io.on('connection', socket => {
   socket.on('admin:resetWires', () => { S.bomb.wireProgress=[]; S.bomb.errors=0; S.bomb.status='bereit'; broadcast(); });
 });
 
+let lastBombTickAt = 0;
 setInterval(()=>{
   if(S.gameStarted && S.escape.running && !S.escape.escaped){
     S.escape.timer = Math.max(0, Number(S.escape.timer||0) - 1);
@@ -307,7 +354,13 @@ setInterval(()=>{
   }
   if(S.gameStarted && S.round===6 && S.bomb.running && S.bomb.status !== 'exploded' && S.bomb.status !== 'defused'){
     S.bomb.timer = Math.max(0, Number(S.bomb.timer||0) - 1);
-    if(S.data.audioConfig.bombTick?.enabled && S.bomb.timer > 0) io.emit('playSound','bombTick');
+    const tickCfg = S.data.audioConfig?.bombTick || {};
+    const minTickMs = Math.max(800, Number(tickCfg.minSecondsBetweenBeeps || 1.5) * 1000);
+    const now = Date.now();
+    if(tickCfg.enabled && S.bomb.timer > 0 && now - lastBombTickAt >= minTickMs){
+      lastBombTickAt = now;
+      io.emit('playSound','bombTick');
+    }
     if(S.bomb.timer <= 0){
       S.bomb.running=false;
       S.bomb.status='exploded';
