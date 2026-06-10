@@ -7,5 +7,7 @@
     "●",
     "◆"
   ],
-  "phase3Code": "7391"
+  "phase3Code": "7391",
+  "bombTimerSeconds": 300,
+  "bombPenaltySeconds": 20
 }

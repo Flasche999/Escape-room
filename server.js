@@ -55,6 +55,8 @@ function finalMemoryCode(memory){
 let data = loadData();
 const defaultTimer = Number(data.bomb?.timerSeconds || 1800);
 const defaultPenalty = Number(data.bomb?.errorPenaltySeconds || 60);
+const defaultBombTimer = Number(data.bomb?.bombTimerSeconds || 300);
+const defaultBombPenalty = Number(data.bomb?.bombPenaltySeconds || 20);
 let S = {
   round: 0,
   itemIndex: 0,
@@ -73,7 +75,8 @@ let S = {
   anagramSolved: false,
   safe: { progress: [], solved: false },
   memory: { flipped: [] },
-  bomb: { running:false, status:'bereit', phase:1, errors:0, wireProgress: [] },
+  bomb: { running:false, status:'bereit', phase:1, errors:0, wireProgress: [], timer: defaultBombTimer, initialSeconds: defaultBombTimer, penaltySeconds: defaultBombPenalty },
+  finale: { started:false, warningActive:false, acknowledgements:{} },
   escape: { timer: defaultTimer, initialSeconds: defaultTimer, running: false, errorPenaltySeconds: defaultPenalty, escaped: false },
   audio: { ...(data.audioConfig.global || { musicEnabled:true, musicVolume:.35, sfxVolume:.8 }) },
   data
@@ -94,6 +97,29 @@ function penalty(reason){
     }
   } else if(reason) S.message = reason;
 }
+
+function bombPenalty(reason){
+  const seconds = Math.max(0, Number(S.bomb.penaltySeconds || S.data.bomb?.bombPenaltySeconds || 20));
+  if(seconds > 0 && S.gameStarted && S.round === 6 && S.bomb.status !== 'exploded' && S.bomb.status !== 'defused'){
+    S.bomb.timer = Math.max(0, Number(S.bomb.timer || 0) - seconds);
+    S.message = (reason || 'Bomben-Fehler!') + ' -' + seconds + ' Sek. Bombenzeit.';
+    if(S.bomb.timer <= 0){
+      S.bomb.running = false;
+      S.bomb.status = 'exploded';
+      S.message = 'Die Bombe ist explodiert!';
+      io.emit('playSound','explosion');
+    }
+  } else if(reason) S.message = reason;
+}
+function startFinaleWarning(){
+  S.finale = { started:false, warningActive:true, acknowledgements:{} };
+  S.message = '🚨 SYSTEMFEHLER: Team-Modus beendet. Alle Spieler müssen bestätigen.';
+}
+function finaleAllAcknowledged(){
+  const ids = (S.players || []).map(p=>p.id);
+  return ids.length > 0 && ids.every(id => S.finale?.acknowledgements?.[id]);
+}
+
 function setRound(r){
   S.round = Number(r);
   S.itemIndex = 0;
@@ -102,19 +128,23 @@ function setRound(r){
   S.showRules = false;
   if(S.round === 5 || S.round === 6){ S.teamChefRequired = true; S.buzzerEnabled = false; }
   if(S.round === 1 || S.round === 7){ S.teamChefRequired = false; S.buzzerEnabled = false; }
-  if(S.round === 6){ S.bomb.status='bereit'; }
-  S.message = S.round === 7 ? 'Finale gestartet. Findet den Exit-Code!' : 'Runde ' + S.round + ' gestartet.';
+  if(S.round === 6){ S.bomb.status='bereit'; S.bomb.timer = Number(S.bomb.initialSeconds || S.data.bomb?.bombTimerSeconds || 300); S.bomb.running = true; }
+  if(S.round === 7) startFinaleWarning();
+  else { S.finale = { started:false, warningActive:false, acknowledgements:{} }; S.message = 'Runde ' + S.round + ' gestartet.'; }
 }
 function fullReset(keepPlayers=true){
   const newData = loadData();
   const t = Number(newData.bomb?.timerSeconds || 1800);
   const p = Number(newData.bomb?.errorPenaltySeconds || 60);
+  const bt = Number(newData.bomb?.bombTimerSeconds || 300);
+  const bp = Number(newData.bomb?.bombPenaltySeconds || 20);
   const players = keepPlayers ? S.players : [];
   S = {
     round:0, itemIndex:0, gameStarted:false, message:'Reset. Lobby geöffnet.', players,
     teamChefId:'', buzzedId:'', buzzerEnabled:false, teamChefRequired:false, showRules:false, revealed:false,
     locks:{}, codeEntries:{}, notes:{}, anagramSolved:false, safe:{progress:[],solved:false}, memory:{flipped:[]},
-    bomb:{running:false,status:'bereit',phase:1,errors:0,wireProgress:[]},
+    bomb:{running:false,status:'bereit',phase:1,errors:0,wireProgress:[],timer:bt,initialSeconds:bt,penaltySeconds:bp},
+    finale:{started:false,warningActive:false,acknowledgements:{}},
     escape:{timer:t, initialSeconds:t, running:false, errorPenaltySeconds:p, escaped:false},
     audio:{...(newData.audioConfig.global || {musicEnabled:true,musicVolume:.35,sfxVolume:.8})}, data:newData
   };
@@ -130,7 +160,9 @@ app.post('/api/:key', (req,res) => {
     if(req.params.key === 'bomb'){
       S.escape.initialSeconds = Number(S.data.bomb.timerSeconds || S.escape.initialSeconds);
       S.escape.errorPenaltySeconds = Number(S.data.bomb.errorPenaltySeconds || S.escape.errorPenaltySeconds);
-      if(!S.gameStarted) S.escape.timer = S.escape.initialSeconds;
+      S.bomb.initialSeconds = Number(S.data.bomb.bombTimerSeconds || S.bomb.initialSeconds || 300);
+      S.bomb.penaltySeconds = Number(S.data.bomb.bombPenaltySeconds || S.bomb.penaltySeconds || 20);
+      if(!S.gameStarted) { S.escape.timer = S.escape.initialSeconds; S.bomb.timer = S.bomb.initialSeconds; }
     }
     S.message = 'JSON gespeichert: ' + req.params.key;
     broadcast(); res.json({ok:true});
@@ -152,6 +184,8 @@ io.on('connection', socket => {
   socket.on('disconnect', () => {
     S.players = S.players.filter(p=>p.id!==socket.id);
     delete S.notes[socket.id];
+    if(S.finale?.acknowledgements) delete S.finale.acknowledgements[socket.id];
+    if(S.finale?.warningActive && finaleAllAcknowledged()){ S.finale.started=true; S.finale.warningActive=false; S.message='Finale freigegeben. Jeder gegen jeden!'; }
     if(S.teamChefId===socket.id) S.teamChefId='';
     if(S.buzzedId===socket.id) S.buzzedId='';
     broadcast();
@@ -178,7 +212,7 @@ io.on('connection', socket => {
     broadcast();
   });
   socket.on('player:finalEscape', code => {
-    if(!S.gameStarted || S.round !== 7) return;
+    if(!S.gameStarted || S.round !== 7 || !S.finale?.started) return;
     const finalLock = (S.data.codes||[]).find(c=>c.id === 'final_exit');
     const expected = finalLock?.code || finalMemoryCode(S.data.finalMemory || {});
     const ok = String(code||'').trim().toUpperCase() === String(expected||'').trim().toUpperCase();
@@ -218,12 +252,26 @@ io.on('connection', socket => {
       S.bomb.wireProgress.push(id); S.message='Kabel korrekt getrennt.'; io.emit('playSound','correct');
       if(S.bomb.wireProgress.length===seq.length){ S.bomb.phase=2; S.bomb.status='phase2'; S.message='Phase 1 geschafft. Symbolphase startet.'; }
     } else {
-      S.bomb.errors++; penalty('Falsches Kabel!'); io.emit('playSound','wrong');
-      if(S.bomb.errors >= (S.data.bomb.maxErrors||3)){ S.bomb.status='exploded'; S.escape.running=false; io.emit('playSound','explosion'); S.message='Die Bombe ist explodiert!'; }
+      S.bomb.errors++; bombPenalty('Falsches Kabel!'); io.emit('playSound','wrong');
+      if(S.bomb.errors >= (S.data.bomb.maxErrors||3)){ S.bomb.status='exploded'; S.bomb.running=false; io.emit('playSound','explosion'); S.message='Die Bombe ist explodiert!'; }
     }
     broadcast();
   });
-  socket.on('player:memoryFlip', n => { if(!S.gameStarted || S.round!==7) return; S.memory.flipped = [Number(n)]; broadcast(); });
+  socket.on('player:memoryFlip', n => { if(!S.gameStarted || S.round!==7 || !S.finale?.started) return; S.memory.flipped = [Number(n)]; broadcast(); });
+
+  socket.on('player:finaleAck', () => {
+    if(!S.gameStarted || S.round !== 7 || !S.finale?.warningActive) return;
+    S.finale.acknowledgements = S.finale.acknowledgements || {};
+    S.finale.acknowledgements[socket.id] = true;
+    const p = S.players.find(x=>x.id===socket.id);
+    S.message = (p?.name || 'Ein Spieler') + ' hat den Systemfehler bestätigt.';
+    if(finaleAllAcknowledged()){
+      S.finale.started = true;
+      S.finale.warningActive = false;
+      S.message = 'Finale freigegeben. Team-Modus beendet. Jeder gegen jeden!';
+    }
+    broadcast();
+  });
 
   socket.on('admin:startGame', () => { S.gameStarted = true; S.round = 1; S.itemIndex = 0; S.escape.timer = Number(S.escape.initialSeconds || 1800); S.escape.running = true; S.escape.escaped = false; S.message = 'Spiel gestartet. Entkommt, bevor die Zeit abläuft!'; broadcast(); });
   socket.on('admin:pauseGameTimer', v => { S.escape.running = !!v; broadcast(); });
@@ -250,8 +298,10 @@ io.on('connection', socket => {
   socket.on('admin:resetMemory', () => { S.memory={flipped:[]}; broadcast(); });
   socket.on('admin:setAudio', obj => { S.audio={...S.audio,...(obj||{})}; broadcast(); });
   socket.on('admin:testSound', key => io.emit('playSound', key));
-  socket.on('admin:bombTimer', act => { if(act==='start') S.escape.running=true; if(act==='pause') S.escape.running=false; if(act==='reset'){ S.bomb={running:false,status:'bereit',phase:1,errors:0,wireProgress:[]}; S.escape.timer=S.escape.initialSeconds; } broadcast(); });
-  socket.on('admin:addTime', n => { S.escape.timer=Math.max(0,S.escape.timer+Number(n||0)); broadcast(); });
+  socket.on('admin:bombTimer', act => { if(act==='start') S.bomb.running=true; if(act==='pause') S.bomb.running=false; if(act==='reset'){ S.bomb={running:false,status:'bereit',phase:1,errors:0,wireProgress:[],timer:Number(S.bomb.initialSeconds||S.data.bomb?.bombTimerSeconds||300),initialSeconds:Number(S.bomb.initialSeconds||S.data.bomb?.bombTimerSeconds||300),penaltySeconds:Number(S.bomb.penaltySeconds||S.data.bomb?.bombPenaltySeconds||20)}; } broadcast(); });
+  socket.on('admin:addTime', n => { if(S.round===6) S.bomb.timer=Math.max(0,Number(S.bomb.timer||0)+Number(n||0)); else S.escape.timer=Math.max(0,S.escape.timer+Number(n||0)); broadcast(); });
+  socket.on('admin:setBombTimer', seconds => { S.bomb.initialSeconds = Math.max(30, Number(seconds||300)); S.bomb.timer = S.bomb.initialSeconds; broadcast(); });
+  socket.on('admin:setBombPenalty', seconds => { S.bomb.penaltySeconds = Math.max(0, Number(seconds||0)); broadcast(); });
   socket.on('admin:bombPhase', n => { S.bomb.phase=Number(n); broadcast(); });
   socket.on('admin:resetWires', () => { S.bomb.wireProgress=[]; S.bomb.errors=0; S.bomb.status='bereit'; broadcast(); });
 });
@@ -259,10 +309,20 @@ io.on('connection', socket => {
 setInterval(()=>{
   if(S.gameStarted && S.escape.running && !S.escape.escaped){
     S.escape.timer = Math.max(0, Number(S.escape.timer||0) - 1);
-    if(S.round===6 && S.data.audioConfig.bombTick?.enabled && S.escape.timer > 0) io.emit('playSound','bombTick');
     if(S.escape.timer <= 0){
       S.escape.running=false;
       S.message='Zeit abgelaufen! Der Escape Room ist verloren.';
+      io.emit('playSound','explosion');
+    }
+    broadcast();
+  }
+  if(S.gameStarted && S.round===6 && S.bomb.running && S.bomb.status !== 'exploded' && S.bomb.status !== 'defused'){
+    S.bomb.timer = Math.max(0, Number(S.bomb.timer||0) - 1);
+    if(S.data.audioConfig.bombTick?.enabled && S.bomb.timer > 0) io.emit('playSound','bombTick');
+    if(S.bomb.timer <= 0){
+      S.bomb.running=false;
+      S.bomb.status='exploded';
+      S.message='Die Bombe ist explodiert!';
       io.emit('playSound','explosion');
     }
     broadcast();
