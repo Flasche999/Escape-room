@@ -1,6 +1,6 @@
 {
   "title": "Der Symbol-Tresor",
-  "story": "Findet mit den Fake-Seiten/Hinweisen die richtige Symbolfolge. Diese Runde ist unabhängig von Runde 1.",
+  "story": "Findet mit den Fake-Seiten/Hinweisen die richtige Symbolfolge.",
   "symbols": [
     {
       "id": "waechter",
@@ -50,9 +50,9 @@
   ],
   "sequence": [
     "waechter",
-    "schluessel",
-    "uhr",
-    "tuer"
+    "buch",
+    "flamme",
+    "uhr"
   ],
-  "adminExplanation": "Die Standardlösung kommt nur aus den Runde-2-Fake-Seiten: Wächter > Schlüssel > Uhr > Tür. Du kannst die Hinweise in runde2_fakepages.json bearbeiten."
+  "adminExplanation": "Die Standardlösung kommt nur aus den Runde-2-Fake-Seiten: Wächter > Buch > Flamme > Uhr. Du kannst die Hinweise in runde2_fakepages.json bearbeiten."
 }

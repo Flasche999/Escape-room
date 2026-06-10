@@ -9,8 +9,8 @@
       "O",
       "F"
     ],
-    "visibleHint": "Sucht im Zimmer nach dem, was euch warm hält. Bringt die Buchstaben in die richtige Reihenfolge und zählt danach im Alphabet.",
-    "extraHint": "A=1, B=2, C=3 ... Z=26. Erst das Lösungswort finden, dann jeden Buchstaben in eine Zahl umwandeln.",
+    "visibleHint": "Bringt die Buchstaben in die richtige Reihenfolge und denkt an das Alphabet.",
+    "extraHint": "A=1, B=2, C=3 ... Z=26..",
     "wordAnswer": "OFEN",
     "autoGenerateNumberCode": true,
     "numberAnswer": "156514",
