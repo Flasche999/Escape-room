@@ -132,7 +132,7 @@ function bombPenalty(reason){
 }
 function startFinaleWarning(){
   S.finale = { started:false, warningActive:true, acknowledgements:{} };
-  S.message = '🚨 SYSTEMFEHLER: Team-Modus beendet. Alle Spieler müssen bestätigen.';
+  S.message = '🚨 KRITISCHER SYSTEMFEHLER: Team-Modus beendet. Ab jetzt spielt jeder allein. Alle Spieler müssen bestätigen.';
 }
 function finaleAllAcknowledged(){
   const ids = (S.players || []).map(p=>p.id);
@@ -145,6 +145,8 @@ function setRound(r){
   S.revealed = false;
   S.buzzedId = '';
   S.showRules = false;
+  // Wichtig: Systemfehler darf ausschließlich beim echten Finale (Runde 11) aktiv sein.
+  if(S.round !== 11){ S.finale = { started:false, warningActive:false, acknowledgements:{} }; }
   if([5,6,7,8,9,10].includes(S.round)){ S.teamChefRequired = true; S.buzzerEnabled = false; }
   if(S.round === 1 || S.round === 11){ S.teamChefRequired = false; S.buzzerEnabled = false; }
   if(S.round === 6){
@@ -161,9 +163,9 @@ function setRound(r){
   if(S.round === 9){ S.ventilation={settings:{},solved:false}; S.message = S.teamChefId ? 'Lüftungssystem gestartet. Teamchef stellt Ventile ein.' : 'Lüftung bereit. Wähle zuerst einen Teamchef aus.'; }
   if(S.round === 10){ S.elevator={progress:[],solved:false}; S.message = S.teamChefId ? 'Fahrstuhl gestartet. Teamchef drückt die Etagenfolge.' : 'Fahrstuhl bereit. Wähle zuerst einen Teamchef aus.'; }
   if(S.round === 11) startFinaleWarning();
-  else if(S.round < 7){ S.finale = { started:false, warningActive:false, acknowledgements:{} }; S.message = 'Runde ' + S.round + ' gestartet.'; }
-  else { S.finale = { started:false, warningActive:false, acknowledgements:{} }; }
+  else if(S.round < 6){ S.message = 'Runde ' + S.round + ' gestartet.'; }
 }
+
 function fullReset(keepPlayers=true){
   const newData = loadData();
   const t = Number(newData.bomb?.timerSeconds || 1800);
@@ -277,7 +279,7 @@ io.on('connection', socket => {
     const next = seq[S.bomb.wireProgress.length];
     if(id === next){
       S.bomb.wireProgress.push(id); S.message='Kabel korrekt getrennt.'; io.emit('playSound','correct');
-      if(S.bomb.wireProgress.length===seq.length){ S.bomb.phase=2; S.bomb.status='phase2'; S.message='Phase 1 geschafft. Symbolphase startet.'; }
+      if(S.bomb.wireProgress.length===seq.length){ S.bomb.phase=2; S.bomb.status='phase2'; S.message='Phase 1 geschafft. Die Bombe ist noch nicht das Finale. Starte danach Runde 7 Laser-Raum.'; S.finale={started:false,warningActive:false,acknowledgements:{}}; }
     } else {
       S.bomb.errors++; bombPenalty('Falsches Kabel!'); io.emit('playSound','wrong');
       if(S.bomb.errors >= (S.data.bomb.maxErrors||3)){ S.bomb.status='exploded'; S.bomb.running=false; io.emit('playSound','explosion'); S.message='Die Bombe ist explodiert!'; }

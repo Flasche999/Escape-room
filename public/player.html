@@ -69,7 +69,29 @@ function symbolFakePagesHtml(){
 }
 
 function item(){if(S.round==1)return (S.data.questions||[])[S.itemIndex]||{}; if(S.round==2)return S.data.symbolSafe||{}; if(S.round==3)return (S.data.sounds||[])[S.itemIndex]||{}; if(S.round==4)return (S.data.lies||[])[S.itemIndex]||{}; if(S.round==5)return (S.data.anagram||[])[0]||{}; if(S.round==7)return S.data.laserRoom||{}; if(S.round==8)return S.data.potionRoom||{}; if(S.round==9)return S.data.ventilationRoom||{}; if(S.round==10)return S.data.elevatorRoom||{}; if(S.round==11)return S.data.finalMemory||{}; return {};}
-function renderTask(){if(!S.gameStarted){$('task').innerHTML='';return} if(S.round==11 && !S.finale?.started){$('task').innerHTML=renderFinaleWarning();return}let it=item(),html=''; if(S.round==1)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><div class="wallRiddle">${(it.clues||[]).map(x=>'▸ '+x).join('<br>')}</div>`; if(S.round==2){let sy=it.symbols||[];html=`<p>${it.story||''}</p><div class="safeGrid">${sy.map(x=>`<button class="safeSymbol" onclick="emit('player:symbol','${x.id}')"><span>${x.icon}</span><small>${x.label}</small></button>`).join('')}</div>${symbolFakePagesHtml()}`} if(S.round==3)html=`<h3>${it.title||''}</h3><p>${it.question||''}</p>${it.audioUrl?`<audio controls src="${it.audioUrl}"></audio>`:''}`; if(S.round==4)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><p class="small">${it.instruction||'Findet die gelogene Aussage und gebt den 4-stelligen Code im Code-Terminal ein.'}</p><div class="lieCodeList">${(it.statements||[]).map((x,i)=>lieStatementRow(x,i)).join('')}</div>`; if(S.round==5)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><div class="letterRiddle">${(it.letters||[]).join(' - ')}</div><p>${it.visibleHint||''}</p><input id="word" placeholder="Lösungswort"><input id="num" placeholder="Zahlencode"><button class="good" onclick="emit('player:anagram',{word:$('word').value,number:$('num').value})">Absenden</button>`; if(S.round==6)html=renderBomb(); if(S.round==7)html=renderLaser(it); if(S.round==8)html=renderPotion(it); if(S.round==9)html=renderVentilation(it); if(S.round==10)html=renderElevator(it); if(S.round==11)html=renderMemory(it); $('task').innerHTML=html;}
+function renderTask(){
+  if(!S.gameStarted){$('task').innerHTML='';return}
+  if(Number(S.round)===11 && !S.finale?.started){$('task').innerHTML=renderFinaleWarning();return}
+  let it=item(),html='';
+  try{
+    if(S.round==1) html=`<h3>${it.title||'Wandrätsel'}</h3><p>${it.story||''}</p><div class="wallRiddle">${(it.clues||[]).map(x=>'▸ '+x).join('<br>')}</div>`;
+    else if(S.round==2){let sy=it.symbols||[];html=`<p>${it.story||''}</p><div class="safeGrid">${sy.map(x=>`<button class="safeSymbol" onclick="emit('player:symbol','${x.id}')"><span>${x.icon}</span><small>${x.label}</small></button>`).join('')}</div>${symbolFakePagesHtml()}`}
+    else if(S.round==3) html=`<h3>${it.title||'Sound-Raum'}</h3><p>${it.question||''}</p>${it.audioUrl?`<audio controls src="${it.audioUrl}"></audio>`:''}`;
+    else if(S.round==4) html=`<h3>${it.title||'Wer lügt?'}</h3><p>${it.story||''}</p><p class="small">${it.instruction||'Findet die gelogene Aussage und gebt den 4-stelligen Code im Code-Terminal ein.'}</p><div class="lieCodeList">${(it.statements||[]).map((x,i)=>lieStatementRow(x,i)).join('')}</div>`;
+    else if(S.round==5) html=`<h3>${it.title||'Buchstaben-Code'}</h3><p>${it.story||''}</p><div class="letterRiddle">${(it.letters||[]).join(' - ')}</div><p>${it.visibleHint||''}</p><input id="word" placeholder="Lösungswort"><input id="num" placeholder="Zahlencode"><button class="good" onclick="emit('player:anagram',{word:$('word').value,number:$('num').value})">Absenden</button>`;
+    else if(S.round==6) html=renderBomb();
+    else if(S.round==7) html=renderLaser(it);
+    else if(S.round==8) html=renderPotion(it);
+    else if(S.round==9) html=renderVentilation(it);
+    else if(S.round==10) html=renderElevator(it);
+    else if(S.round==11) html=renderMemory(it);
+    else html='<div class="status">Warte auf die nächste Runde.</div>';
+  }catch(e){
+    console.error('RenderTask Fehler:',e);
+    html=`<div class="dangerBox"><h3>Anzeige-Fehler</h3><p>Diese Runde konnte in der Spieleransicht nicht geladen werden.</p><p class="small">${e.message}</p></div>`;
+  }
+  $('task').innerHTML=html;
+}
 function isTeamChef(){return S.teamChefId===socket.id}
 function lockedButtonAttrs(){return isTeamChef()?'':'disabled title="Nur der Teamchef darf das bedienen"'}
 function lockedSelectAttrs(){return isTeamChef()?'':'disabled title="Nur der Teamchef darf das bedienen"'}
@@ -129,11 +151,11 @@ function renderFinaleWarning(){
   const ps=S.players||[];
   const list=ps.map(p=>`<div class="player ${ack[p.id]?'teamchef':''}"><span class="avatar">${p.avatar}</span> <b>${p.name}</b><span>${ack[p.id]?'✅ bestätigt':'⏳ wartet'}</span></div>`).join('')||'<p class="small">Noch keine Spieler.</p>';
   const meDone=!!ack[socket.id];
-  return `<div class="systemErrorBox"><h2>🚨 SYSTEMFEHLER</h2><h3>TEAM-MODUS BEENDET</h3><p>Ab jetzt spielt jeder gegen jeden. Keine Teamabsprachen mehr. Bestätige die Warnung, damit das Finale starten kann.</p><button class="danger bigConfirm" ${meDone?'disabled':''} onclick="emit('player:finaleAck')">${meDone?'Bestätigt – warte auf alle anderen':'Warnung bestätigen'}</button><h3>Bestätigungen</h3>${list}</div>`;
+  return `<div class="systemErrorBox"><h2>🚨 KRITISCHER SYSTEMFEHLER</h2><h3>TEAM-MODUS WURDE GEWALTSAM BEENDET</h3><p><b>Die Verbindung zum Team wurde getrennt.</b></p><p>Ab jetzt zählt nur noch dein eigenes Überleben. Jeder spielt alleine. Keine gemeinsame Lösung, keine Teamhilfe, keine zweite Chance.</p><p class="redWarn">Bestätige die Warnung. Erst wenn alle Spieler bestätigt haben, wird das Finale freigegeben.</p><button class="danger bigConfirm" ${meDone?'disabled':''} onclick="emit('player:finaleAck')">${meDone?'Bestätigt – warte auf alle anderen':'Ich bestätige: Ab jetzt spiele ich alleine'}</button><h3>Bestätigungen</h3>${list}</div>`;
 }
 
 function cardText(it,n){let r=(it.ruleCards||[]).find(x=>+x.number===n); if(r)return r.content; let c=(it.codeCards||[]).find(x=>+x.number===n); if(c)return 'Zahl: '+c.value; return it.emptyCardText||'Kein Hinweis'}
-function renderMemory(it){let max=+it.cardCount||40, open=S.memory?.flipped?.[0];return `<div class="finaleMiniWarn redWarn">🚨 SYSTEMFEHLER BESTÄTIGT: Team-Modus beendet!</div><p>${it.instruction||''}</p><div class="memoryGrid">${Array.from({length:max},(_,i)=>{let n=i+1,o=open===n;return `<button class="memoryCard ${o?'open':''}" onclick="emit('player:memoryFlip',${n})"><b>${n}</b><span>${o?cardText(it,n):'?'}</span></button>`}).join('')}</div><div class="finalExitBox"><h3>🚪 Exit-Code eingeben</h3><p class="small">Wer den finalen Code findet, kann entkommen.</p><input id="finalCode" placeholder="Finaler Exit-Code"><button class="good" onclick="emit('player:finalEscape',$('finalCode').value)">Tür öffnen</button></div>`}
+function renderMemory(it){let max=+it.cardCount||40, open=S.memory?.flipped?.[0];return `<div class="finaleMiniWarn redWarn">🚨 SYSTEMFEHLER BESTÄTIGT: Team-Modus beendet. Jeder kämpft allein um den Ausgang.</div><p>${it.instruction||''}</p><div class="memoryGrid">${Array.from({length:max},(_,i)=>{let n=i+1,o=open===n;return `<button class="memoryCard ${o?'open':''}" onclick="emit('player:memoryFlip',${n})"><b>${n}</b><span>${o?cardText(it,n):'?'}</span></button>`}).join('')}</div><div class="finalExitBox"><h3>🚪 Exit-Code eingeben</h3><p class="small">Wer den finalen Code findet, kann entkommen.</p><input id="finalCode" placeholder="Finaler Exit-Code"><button class="good" onclick="emit('player:finalEscape',$('finalCode').value)">Tür öffnen</button></div>`}
 function showWinner(p){let box=document.createElement('div');box.className='winnerOverlay';box.innerHTML=`<div class="doorAnim"><div class="door left"></div><div class="door right"></div><div class="winnerText">👑 ${p?.name||'Gewinner'} ist entkommen!</div></div>`;document.body.appendChild(box);setTimeout(()=>box.remove(),7000)}
 function renderCodes(){let codes=(S.data.codes||[]).filter(c=>!c.round||c.round===S.round);$('codes').innerHTML=codes.map(c=>`<div class="lock ${S.locks?.[c.id]?'open':''}"><b>${S.locks?.[c.id]?'✅':'🔒'} ${c.title}</b><p class="small">${c.hint||''}</p><input id="code_${c.id}" placeholder="Code"><button onclick="emit('player:code',{id:'${c.id}',code:$('code_${c.id}').value})">Code prüfen</button></div>`).join('')}
 </script></body></html>
