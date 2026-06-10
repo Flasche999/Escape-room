@@ -28,11 +28,43 @@
   },
   {
     "id": "final_exit",
-    "round": 7,
+    "round": 11,
     "title": "Finaler Exit-Code",
     "code": "6273",
     "hint": "Findet die Zahlenkarten im Memory und sortiert sie nach Kartennummer.",
     "requireAllPlayers": false,
     "successText": "Die Tür öffnet sich! Ihr seid entkommen!"
+  },
+  {
+    "id": "tuer7_laser",
+    "round": 7,
+    "title": "Tür 7 - Laser-Raum",
+    "code": "AUTO",
+    "hint": "Öffnet automatisch, wenn der Teamchef die Spiegel richtig einstellt.",
+    "autoUnlock": true
+  },
+  {
+    "id": "tuer8_trank",
+    "round": 8,
+    "title": "Tür 8 - Giftiger Trank",
+    "code": "AUTO",
+    "hint": "Öffnet automatisch, wenn der Teamchef die sichere Flasche wählt.",
+    "autoUnlock": true
+  },
+  {
+    "id": "tuer9_lueftung",
+    "round": 9,
+    "title": "Tür 9 - Lüftungssystem",
+    "code": "AUTO",
+    "hint": "Öffnet automatisch, wenn alle Ventile richtig stehen.",
+    "autoUnlock": true
+  },
+  {
+    "id": "tuer10_fahrstuhl",
+    "round": 10,
+    "title": "Tür 10 - Fahrstuhl",
+    "code": "AUTO",
+    "hint": "Öffnet automatisch, wenn die Etagenfolge stimmt.",
+    "autoUnlock": true
   }
 ]

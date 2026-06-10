@@ -1,0 +1,77 @@
+{
+  "title": "Runde 9: Das Lüftungssystem",
+  "story": "Der Sauerstoff fällt. Nur der Teamchef sieht die Ventile und darf sie einstellen.",
+  "instructionChef": "Stelle die Ventile ein und prüfe die Anlage.",
+  "instructionHelpers": "Lest die Wartungsberichte und gebt dem Teamchef die richtigen Werte durch.",
+  "valves": [
+    {
+      "id": "A",
+      "label": "Ventil A",
+      "options": [
+        "geschlossen",
+        "30",
+        "50",
+        "70",
+        "100"
+      ]
+    },
+    {
+      "id": "B",
+      "label": "Ventil B",
+      "options": [
+        "geschlossen",
+        "30",
+        "50",
+        "70",
+        "100"
+      ]
+    },
+    {
+      "id": "C",
+      "label": "Ventil C",
+      "options": [
+        "geschlossen",
+        "30",
+        "50",
+        "70",
+        "100"
+      ]
+    },
+    {
+      "id": "D",
+      "label": "Ventil D",
+      "options": [
+        "geschlossen",
+        "30",
+        "50",
+        "70",
+        "100"
+      ]
+    }
+  ],
+  "solution": {
+    "A": "30",
+    "B": "70",
+    "C": "geschlossen",
+    "D": "50"
+  },
+  "fakePages": [
+    {
+      "buttonText": "Wartungsbericht öffnen",
+      "title": "Wartungsbericht",
+      "content": "Ventil B braucht mehr Druck als Ventil A. Ventil A bleibt bei 30 Prozent."
+    },
+    {
+      "buttonText": "Sauerstoff-Protokoll",
+      "title": "Sauerstoff-Protokoll",
+      "content": "Ventil C ist beschädigt und muss geschlossen bleiben."
+    },
+    {
+      "buttonText": "Techniker-Notiz",
+      "title": "Handschriftliche Notiz",
+      "content": "Die mittlere Leitung läuft stabil bei 50 Prozent. Nicht mehr, nicht weniger."
+    }
+  ],
+  "successText": "Der Sauerstofffluss ist stabil. Die nächste Tür wird freigegeben.",
+  "adminExplanation": "Lösung: A=30, B=70, C=geschlossen, D=50."
+}

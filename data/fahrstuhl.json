@@ -1,0 +1,61 @@
+{
+  "title": "Runde 10: Der Fahrstuhl",
+  "story": "Der letzte Weg zum Finale führt über einen defekten Fahrstuhl. Nur der Teamchef sieht das Bedienfeld.",
+  "instructionChef": "Drücke die Etagen in der richtigen Reihenfolge.",
+  "instructionHelpers": "Lest die Etagen-Hinweise und sagt dem Teamchef die Reihenfolge.",
+  "floors": [
+    {
+      "id": "K",
+      "label": "Keller"
+    },
+    {
+      "id": "1",
+      "label": "Etage 1"
+    },
+    {
+      "id": "2",
+      "label": "Etage 2"
+    },
+    {
+      "id": "3",
+      "label": "Etage 3"
+    },
+    {
+      "id": "4",
+      "label": "Etage 4"
+    },
+    {
+      "id": "8",
+      "label": "Etage 8"
+    },
+    {
+      "id": "R",
+      "label": "Dach"
+    }
+  ],
+  "sequence": [
+    "3",
+    "K",
+    "8",
+    "R"
+  ],
+  "fakePages": [
+    {
+      "buttonText": "Etagenplan öffnen",
+      "title": "Etagenplan",
+      "content": "Der Keller ist nicht die erste Station. Die rote Markierung liegt auf Etage 3."
+    },
+    {
+      "buttonText": "Sicherheitsnotiz",
+      "title": "Sicherheitsnotiz",
+      "content": "Meide alle geraden Zahlen außer 8."
+    },
+    {
+      "buttonText": "Fahrstuhl-Log",
+      "title": "Fahrstuhl-Log",
+      "content": "Das Dach kommt zuletzt. Vor dem Dach muss Etage 8 aktiviert werden."
+    }
+  ],
+  "successText": "Der Fahrstuhl fährt los. Das Finale wird freigegeben.",
+  "adminExplanation": "Lösung: Etage 3 → Keller → Etage 8 → Dach."
+}

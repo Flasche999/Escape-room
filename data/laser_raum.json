@@ -1,0 +1,74 @@
+{
+  "title": "Runde 7: Laser-Raum",
+  "story": "Ein roter Laser blockiert den Ausgang. Nur der Teamchef sieht das Spiegel-Feld und darf die Spiegel ausrichten.",
+  "instructionChef": "Richte alle Spiegel nach den Sicherheitsprotokollen aus und drücke dann auf Prüfen.",
+  "instructionHelpers": "Lest die Sicherheitsprotokolle und sagt dem Teamchef über Discord, wie die Spiegel stehen müssen.",
+  "mirrors": [
+    {
+      "id": "spiegel1",
+      "label": "Spiegel 1",
+      "options": [
+        "links",
+        "oben",
+        "rechts",
+        "unten"
+      ]
+    },
+    {
+      "id": "spiegel2",
+      "label": "Spiegel 2",
+      "options": [
+        "links",
+        "oben",
+        "rechts",
+        "unten"
+      ]
+    },
+    {
+      "id": "spiegel3",
+      "label": "Spiegel 3",
+      "options": [
+        "nicht anfassen",
+        "links",
+        "oben",
+        "rechts",
+        "unten"
+      ]
+    },
+    {
+      "id": "spiegel4",
+      "label": "Spiegel 4",
+      "options": [
+        "links",
+        "oben",
+        "rechts",
+        "unten"
+      ]
+    }
+  ],
+  "solution": {
+    "spiegel1": "links",
+    "spiegel2": "oben",
+    "spiegel3": "nicht anfassen",
+    "spiegel4": "rechts"
+  },
+  "fakePages": [
+    {
+      "buttonText": "Sicherheitsprotokoll A öffnen",
+      "title": "Protokoll A-17",
+      "content": "Spiegel 2 muss nach oben zeigen. Spiegel 3 darf nicht berührt werden."
+    },
+    {
+      "buttonText": "Wartungsnotiz öffnen",
+      "title": "Wartungsnotiz",
+      "content": "Wenn der erste Spiegel nach links steht, trifft der Strahl nicht den Alarm-Sensor."
+    },
+    {
+      "buttonText": "Laser-Skizze öffnen",
+      "title": "Unvollständige Skizze",
+      "content": "Der letzte Spiegel lenkt den Strahl nach rechts zum Ausgangs-Empfänger."
+    }
+  ],
+  "successText": "Der Laser wurde korrekt umgeleitet. Die Tür entriegelt sich.",
+  "adminExplanation": "Lösung: Spiegel 1 links, Spiegel 2 oben, Spiegel 3 nicht anfassen, Spiegel 4 rechts."
+}

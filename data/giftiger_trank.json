@@ -1,0 +1,76 @@
+{
+  "title": "Runde 8: Der giftige Trank",
+  "story": "Im Labor stehen acht Flaschen. Nur eine öffnet die nächste Tür, die anderen lösen Alarm aus.",
+  "instructionChef": "Wähle genau eine Flasche aus.",
+  "instructionHelpers": "Lest Laborberichte und Rezeptzettel. Sagt dem Teamchef, welche Flasche sicher ist.",
+  "bottles": [
+    {
+      "id": "flasche1",
+      "label": "Flasche 1",
+      "color": "rot",
+      "shape": "rund"
+    },
+    {
+      "id": "flasche2",
+      "label": "Flasche 2",
+      "color": "blau",
+      "shape": "schmal"
+    },
+    {
+      "id": "flasche3",
+      "label": "Flasche 3",
+      "color": "grün",
+      "shape": "eckig"
+    },
+    {
+      "id": "flasche4",
+      "label": "Flasche 4",
+      "color": "gelb",
+      "shape": "rund"
+    },
+    {
+      "id": "flasche5",
+      "label": "Flasche 5",
+      "color": "lila",
+      "shape": "hoch"
+    },
+    {
+      "id": "flasche6",
+      "label": "Flasche 6",
+      "color": "schwarz",
+      "shape": "klein"
+    },
+    {
+      "id": "flasche7",
+      "label": "Flasche 7",
+      "color": "weiß",
+      "shape": "breit"
+    },
+    {
+      "id": "flasche8",
+      "label": "Flasche 8",
+      "color": "orange",
+      "shape": "schmal"
+    }
+  ],
+  "correctBottleId": "flasche3",
+  "fakePages": [
+    {
+      "buttonText": "Laborbericht 1",
+      "title": "Analyse der roten Flüssigkeit",
+      "content": "Rote Flüssigkeiten sind instabil und dürfen nicht als Schlüssel benutzt werden."
+    },
+    {
+      "buttonText": "Rezeptzettel",
+      "title": "Altes Rezept",
+      "content": "Der Ausgang öffnet sich nur mit einem grünen Trank. Die sichere Flasche steht neben Blau."
+    },
+    {
+      "buttonText": "Warnhinweis",
+      "title": "Giftwarnung",
+      "content": "Schwarze und lila Flaschen wurden als gefährlich markiert."
+    }
+  ],
+  "successText": "Der sichere Trank wurde gewählt. Die Labortür öffnet sich.",
+  "adminExplanation": "Richtig ist Flasche 3: grün und neben Blau."
+}

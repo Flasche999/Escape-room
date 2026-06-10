@@ -27,6 +27,10 @@ const files = {
   codes: 'codes.json',
   finale: 'finale.json',
   finalMemory: 'memory_finale.json',
+  laserRoom: 'laser_raum.json',
+  potionRoom: 'giftiger_trank.json',
+  ventilationRoom: 'lueftungssystem.json',
+  elevatorRoom: 'fahrstuhl.json',
   audioConfig: 'audio_config.json'
 };
 
@@ -87,6 +91,10 @@ let S = {
   safe: { progress: [], solved: false },
   memory: { flipped: [] },
   bomb: { running:false, status:'bereit', phase:1, errors:0, wireProgress: [], timer: defaultBombTimer, initialSeconds: defaultBombTimer, penaltySeconds: defaultBombPenalty },
+  laser: { settings:{}, solved:false },
+  potion: { selected:'', solved:false },
+  ventilation: { settings:{}, solved:false },
+  elevator: { progress:[], solved:false },
   finale: { started:false, warningActive:false, acknowledgements:{} },
   escape: { timer: defaultTimer, initialSeconds: defaultTimer, running: false, errorPenaltySeconds: defaultPenalty, escaped: false },
   audio: { ...(data.audioConfig.global || { musicEnabled:true, musicVolume:.35, sfxVolume:.8 }) },
@@ -137,8 +145,8 @@ function setRound(r){
   S.revealed = false;
   S.buzzedId = '';
   S.showRules = false;
-  if(S.round === 5 || S.round === 6){ S.teamChefRequired = true; S.buzzerEnabled = false; }
-  if(S.round === 1 || S.round === 7){ S.teamChefRequired = false; S.buzzerEnabled = false; }
+  if([5,6,7,8,9,10].includes(S.round)){ S.teamChefRequired = true; S.buzzerEnabled = false; }
+  if(S.round === 1 || S.round === 11){ S.teamChefRequired = false; S.buzzerEnabled = false; }
   if(S.round === 6){
     S.bomb.status='bereit';
     S.bomb.timer = Number(S.bomb.initialSeconds || S.data.bomb?.bombTimerSeconds || 300);
@@ -148,8 +156,13 @@ function setRound(r){
     S.bomb.wireProgress = [];
     S.message = S.teamChefId ? 'Bombenrunde bereit. Bomben-Timer startet mit dem Teamchef.' : 'Bombenrunde bereit. Wähle zuerst einen Teamchef aus.';
   }
-  if(S.round === 7) startFinaleWarning();
-  else { S.finale = { started:false, warningActive:false, acknowledgements:{} }; S.message = 'Runde ' + S.round + ' gestartet.'; }
+  if(S.round === 7){ S.laser={settings:{},solved:false}; S.message = S.teamChefId ? 'Laser-Raum gestartet. Teamchef stellt die Spiegel ein.' : 'Laser-Raum bereit. Wähle zuerst einen Teamchef aus.'; }
+  if(S.round === 8){ S.potion={selected:'',solved:false}; S.message = S.teamChefId ? 'Labor gestartet. Teamchef wählt den Trank.' : 'Labor bereit. Wähle zuerst einen Teamchef aus.'; }
+  if(S.round === 9){ S.ventilation={settings:{},solved:false}; S.message = S.teamChefId ? 'Lüftungssystem gestartet. Teamchef stellt Ventile ein.' : 'Lüftung bereit. Wähle zuerst einen Teamchef aus.'; }
+  if(S.round === 10){ S.elevator={progress:[],solved:false}; S.message = S.teamChefId ? 'Fahrstuhl gestartet. Teamchef drückt die Etagenfolge.' : 'Fahrstuhl bereit. Wähle zuerst einen Teamchef aus.'; }
+  if(S.round === 11) startFinaleWarning();
+  else if(S.round < 7){ S.finale = { started:false, warningActive:false, acknowledgements:{} }; S.message = 'Runde ' + S.round + ' gestartet.'; }
+  else { S.finale = { started:false, warningActive:false, acknowledgements:{} }; }
 }
 function fullReset(keepPlayers=true){
   const newData = loadData();
@@ -163,6 +176,7 @@ function fullReset(keepPlayers=true){
     teamChefId:'', buzzedId:'', buzzerEnabled:false, teamChefRequired:false, showRules:false, revealed:false,
     locks:{}, codeEntries:{}, notes:{}, anagramSolved:false, safe:{progress:[],solved:false}, memory:{flipped:[]},
     bomb:{running:false,status:'bereit',phase:1,errors:0,wireProgress:[],timer:bt,initialSeconds:bt,penaltySeconds:bp},
+    laser:{settings:{},solved:false}, potion:{selected:'',solved:false}, ventilation:{settings:{},solved:false}, elevator:{progress:[],solved:false},
     finale:{started:false,warningActive:false,acknowledgements:{}},
     escape:{timer:t, initialSeconds:t, running:false, errorPenaltySeconds:p, escaped:false},
     audio:{...(newData.audioConfig.global || {musicEnabled:true,musicVolume:.35,sfxVolume:.8})}, data:newData
@@ -225,7 +239,7 @@ io.on('connection', socket => {
     broadcast();
   });
   socket.on('player:finalEscape', code => {
-    if(!S.gameStarted || S.round !== 7 || !S.finale?.started) return;
+    if(!S.gameStarted || S.round !== 11 || !S.finale?.started) return;
     const finalLock = (S.data.codes||[]).find(c=>c.id === 'final_exit');
     const expected = finalLock?.code || finalMemoryCode(S.data.finalMemory || {});
     const ok = String(code||'').trim().toUpperCase() === String(expected||'').trim().toUpperCase();
@@ -287,10 +301,51 @@ io.on('connection', socket => {
     broadcast();
   });
 
-  socket.on('player:memoryFlip', n => { if(!S.gameStarted || S.round!==7 || !S.finale?.started) return; S.memory.flipped = [Number(n)]; broadcast(); });
+
+  socket.on('player:laserSubmit', settings => {
+    if(!S.gameStarted || S.round!==7 || !isChef(socket.id) || S.laser.solved) return;
+    const sol = S.data.laserRoom?.solution || {};
+    const ok = Object.keys(sol).length && Object.keys(sol).every(k => String((settings||{})[k]||'') === String(sol[k]||''));
+    if(ok){ S.laser.settings = {...settings}; S.laser.solved = true; unlock('tuer7_laser'); S.message = S.data.laserRoom?.successText || 'Laser-Raum gelöst.'; io.emit('playSound','correct'); }
+    else { S.laser.settings = {...(settings||{})}; penalty('Laser falsch ausgerichtet!'); io.emit('playSound','wrong'); }
+    broadcast();
+  });
+  socket.on('player:potionChoose', id => {
+    if(!S.gameStarted || S.round!==8 || !isChef(socket.id) || S.potion.solved) return;
+    const ok = String(id||'') === String(S.data.potionRoom?.correctBottleId || '');
+    S.potion.selected = String(id||'');
+    if(ok){ S.potion.solved = true; unlock('tuer8_trank'); S.message = S.data.potionRoom?.successText || 'Richtiger Trank gewählt.'; io.emit('playSound','correct'); }
+    else { penalty('Falscher Trank!'); io.emit('playSound','wrong'); }
+    broadcast();
+  });
+  socket.on('player:ventilationSubmit', settings => {
+    if(!S.gameStarted || S.round!==9 || !isChef(socket.id) || S.ventilation.solved) return;
+    const sol = S.data.ventilationRoom?.solution || {};
+    const ok = Object.keys(sol).length && Object.keys(sol).every(k => String((settings||{})[k]||'') === String(sol[k]||''));
+    if(ok){ S.ventilation.settings = {...settings}; S.ventilation.solved = true; unlock('tuer9_lueftung'); S.message = S.data.ventilationRoom?.successText || 'Lüftungssystem gelöst.'; io.emit('playSound','correct'); }
+    else { S.ventilation.settings = {...(settings||{})}; penalty('Lüftung falsch eingestellt!'); io.emit('playSound','wrong'); }
+    broadcast();
+  });
+  socket.on('player:elevatorPress', id => {
+    if(!S.gameStarted || S.round!==10 || !isChef(socket.id) || S.elevator.solved) return;
+    const seq = S.data.elevatorRoom?.sequence || [];
+    const next = seq[S.elevator.progress.length];
+    if(String(id||'') === String(next||'')){
+      S.elevator.progress.push(String(id));
+      if(S.elevator.progress.length === seq.length){ S.elevator.solved = true; unlock('tuer10_fahrstuhl'); S.message = S.data.elevatorRoom?.successText || 'Fahrstuhl aktiviert.'; io.emit('playSound','correct'); }
+      else { S.message = 'Etage korrekt. Nächste Etage wählen.'; io.emit('playSound','correct'); }
+    } else { S.elevator.progress = []; penalty('Falsche Fahrstuhl-Etage! Reihenfolge zurückgesetzt.'); io.emit('playSound','wrong'); }
+    broadcast();
+  });
+  socket.on('admin:resetLaser', () => { S.laser={settings:{},solved:false}; delete S.locks.tuer7_laser; broadcast(); });
+  socket.on('admin:resetPotion', () => { S.potion={selected:'',solved:false}; delete S.locks.tuer8_trank; broadcast(); });
+  socket.on('admin:resetVentilation', () => { S.ventilation={settings:{},solved:false}; delete S.locks.tuer9_lueftung; broadcast(); });
+  socket.on('admin:resetElevator', () => { S.elevator={progress:[],solved:false}; delete S.locks.tuer10_fahrstuhl; broadcast(); });
+
+  socket.on('player:memoryFlip', n => { if(!S.gameStarted || S.round!==11 || !S.finale?.started) return; S.memory.flipped = [Number(n)]; broadcast(); });
 
   socket.on('player:finaleAck', () => {
-    if(!S.gameStarted || S.round !== 7 || !S.finale?.warningActive) return;
+    if(!S.gameStarted || S.round !== 11 || !S.finale?.warningActive) return;
     S.finale.acknowledgements = S.finale.acknowledgements || {};
     S.finale.acknowledgements[socket.id] = true;
     const p = S.players.find(x=>x.id===socket.id);

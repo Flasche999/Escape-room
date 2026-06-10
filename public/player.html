@@ -35,10 +35,10 @@ function startMusic(){if(!joined)return;let cfg=S.data?.audioConfig, r=cfg?.back
 socket.on('state',s=>{
   S=s;
   $('timer').textContent=fmt(s.escape?.timer??1800);
-  $('subline').textContent=s.gameStarted?(s.round==7?'Finale':'Runde '+s.round):'Lobby';
+  $('subline').textContent=s.gameStarted?(s.round==11?'Finale':'Runde '+s.round):'Lobby';
   $('message').innerHTML=s.message||'';
   $('messageGame').innerHTML=s.message||'';
-  document.body.classList.toggle('playerFinale',s.round==7);
+  document.body.classList.toggle('playerFinale',s.round==11);
   updateBombTimerOnly();
   const visibilityKey=JSON.stringify([joined,!!s.gameStarted,s.round,s.finale?.started,s.finale?.warningActive]);
   if(visibilityKey!==lastVisibilityKey){lastVisibilityKey=visibilityKey;renderVisibility();}
@@ -46,16 +46,16 @@ socket.on('state',s=>{
   if(playersKey!==lastPlayersKey){lastPlayersKey=playersKey;renderPlayers();}
   const rulesKey=JSON.stringify([s.showRules,s.round]);
   if(rulesKey!==lastRulesKey){lastRulesKey=rulesKey;renderRules();}
-  const taskKey=JSON.stringify([s.gameStarted,s.round,s.itemIndex,s.safe,s.data?.symbolFakePages,s.bomb?.phase,s.bomb?.errors,s.bomb?.status,s.bomb?.wireProgress,s.memory?.flipped,s.finale]);
+  const taskKey=JSON.stringify([s.gameStarted,s.round,s.itemIndex,s.safe,s.data?.symbolFakePages,s.bomb?.phase,s.bomb?.errors,s.bomb?.status,s.bomb?.wireProgress,s.memory?.flipped,s.finale,s.teamChefId,s.laser,s.potion,s.ventilation,s.elevator,s.data?.laserRoom,s.data?.potionRoom,s.data?.ventilationRoom,s.data?.elevatorRoom]);
   if(taskKey!==lastTaskKey){lastTaskKey=taskKey;renderTask();}
   const codesKey=JSON.stringify([s.gameStarted,s.round,s.locks,s.codeEntries]);
   if(codesKey!==lastCodesKey){lastCodesKey=codesKey;renderCodes();}
   startMusic();
 });
 function updateBombTimerOnly(){let el=$('bombTimerDisplay'); if(el) el.textContent=fmt(S.bomb?.timer||0); let admin=0;}
-function renderVisibility(){let game=!!S.gameStarted;if(!joined){$('join').style.display='block';$('lobby').style.display='none';$('gameHead').style.display='none';$('gameGrid').style.display='none';$('codesPanel').style.display='none';return} $('lobby').style.display=game?'none':'block';$('gameHead').style.display=game?'block':'none';$('gameGrid').style.display=game?'grid':'none';$('codesPanel').style.display=(game&&S.round!==7)?'block':'none';}
+function renderVisibility(){let game=!!S.gameStarted;if(!joined){$('join').style.display='block';$('lobby').style.display='none';$('gameHead').style.display='none';$('gameGrid').style.display='none';$('codesPanel').style.display='none';return} $('lobby').style.display=game?'none':'block';$('gameHead').style.display=game?'block':'none';$('gameGrid').style.display=game?'grid':'none';$('codesPanel').style.display=(game&&S.round!==11)?'block':'none';}
 function renderPlayers(){let ps=S.players||[];let html=ps.map(p=>`<div class="player ${p.id===S.teamChefId?'teamchef':''}"><span class="avatar">${p.avatar}</span> <b>${p.name}</b> ${p.id===S.teamChefId?'👑 Teamchef':''}</div>`).join('')||'<p class="small">Noch keine Spieler.</p>';$('players').innerHTML=html;$('playersLobby').innerHTML=html;}
-function renderRules(){const rules={1:'Runde 1: Findet den Wand-Code. Jeder Spieler gibt ihn selbst ein.',2:'Runde 2: Symbol-Tresor. Klickt die richtige Symbolfolge.',3:'Runde 3: Hört genau hin.',4:'Runde 4: Findet die lügende Aussage.',5:'Runde 5: Nur der Teamchef gibt Lösungswort und Zahlencode ein.',6:'Runde 6: Teamchef schneidet Kabel. Die anderen lesen Fake-Seiten und helfen über Discord.',7:'Finale: Jeder gegen jeden. Memory-Karten merken und Exit-Code eingeben.'};$('rules').innerHTML=S.showRules?`<div class="card rules">${rules[S.round]}</div>`:''; $('roundTitle').textContent=S.round==7?'Finale':'Runde '+S.round;}
+function renderRules(){const rules={1:'Runde 1: Findet den Wand-Code.',2:'Runde 2: Symbol-Tresor mit Fake-Seiten.',3:'Runde 3: Hört genau hin.',4:'Runde 4: Findet die gelogene Aussage und den 4-stelligen Code.',5:'Runde 5: Nur der Teamchef gibt Lösungswort und Zahlencode ein.',6:'Runde 6: Teamchef schneidet Kabel. Helfer lesen Fake-Seiten.',7:'Runde 7: Laser-Raum. Teamchef richtet Spiegel aus.',8:'Runde 8: Giftiger Trank. Teamchef wählt eine Flasche.',9:'Runde 9: Lüftungssystem. Teamchef stellt Ventile ein.',10:'Runde 10: Fahrstuhl. Teamchef drückt die Etagenfolge.',11:'Finale: Jeder gegen jeden. Memory-Karten merken und Exit-Code eingeben.'};$('rules').innerHTML=S.showRules?`<div class="card rules">${rules[S.round]}</div>`:''; $('roundTitle').textContent=S.round==11?'Finale':'Runde '+S.round;}
 
 function lieStatementRow(x,i){
   if(x && typeof x==='object') return `<div class="lieCodeRow"><b>${x.code||String(i+1).padStart(4,'0')}</b><span>${x.text||x.statement||''}</span></div>`;
@@ -68,18 +68,60 @@ function symbolFakePagesHtml(){
   return `<h3>Fake-Seiten / Hinweise</h3><p class="small">Diese Seiten gehören nur zu Runde 2 und sind unabhängig von Runde 1.</p>${pages.map(p=>`<details class="card fakePage"><summary>${p.buttonText||'Seite öffnen'}</summary><h3>${p.title||''}</h3><p>${p.content||''}</p></details>`).join('')}`;
 }
 
-function item(){if(S.round==1)return (S.data.questions||[])[S.itemIndex]||{}; if(S.round==2)return S.data.symbolSafe||{}; if(S.round==3)return (S.data.sounds||[])[S.itemIndex]||{}; if(S.round==4)return (S.data.lies||[])[S.itemIndex]||{}; if(S.round==5)return (S.data.anagram||[])[0]||{}; if(S.round==7)return S.data.finalMemory||{}; return {};}
-function renderTask(){if(!S.gameStarted){$('task').innerHTML='';return} if(S.round==7 && !S.finale?.started){$('task').innerHTML=renderFinaleWarning();return}let it=item(),html=''; if(S.round==1)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><div class="wallRiddle">${(it.clues||[]).map(x=>'▸ '+x).join('<br>')}</div>`; if(S.round==2){let sy=it.symbols||[];html=`<p>${it.story||''}</p><div class="safeGrid">${sy.map(x=>`<button class="safeSymbol" onclick="emit('player:symbol','${x.id}')"><span>${x.icon}</span><small>${x.label}</small></button>`).join('')}</div>${symbolFakePagesHtml()}`} if(S.round==3)html=`<h3>${it.title||''}</h3><p>${it.question||''}</p>${it.audioUrl?`<audio controls src="${it.audioUrl}"></audio>`:''}`; if(S.round==4)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><p class="small">${it.instruction||'Findet die gelogene Aussage und gebt den 4-stelligen Code im Code-Terminal ein.'}</p><div class="lieCodeList">${(it.statements||[]).map((x,i)=>lieStatementRow(x,i)).join('')}</div>`; if(S.round==5)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><div class="letterRiddle">${(it.letters||[]).join(' - ')}</div><p>${it.visibleHint||''}</p><input id="word" placeholder="Lösungswort"><input id="num" placeholder="Zahlencode"><button class="good" onclick="emit('player:anagram',{word:$('word').value,number:$('num').value})">Absenden</button>`; if(S.round==6)html=renderBomb(); if(S.round==7)html=renderMemory(it); $('task').innerHTML=html;}
+function item(){if(S.round==1)return (S.data.questions||[])[S.itemIndex]||{}; if(S.round==2)return S.data.symbolSafe||{}; if(S.round==3)return (S.data.sounds||[])[S.itemIndex]||{}; if(S.round==4)return (S.data.lies||[])[S.itemIndex]||{}; if(S.round==5)return (S.data.anagram||[])[0]||{}; if(S.round==7)return S.data.laserRoom||{}; if(S.round==8)return S.data.potionRoom||{}; if(S.round==9)return S.data.ventilationRoom||{}; if(S.round==10)return S.data.elevatorRoom||{}; if(S.round==11)return S.data.finalMemory||{}; return {};}
+function renderTask(){if(!S.gameStarted){$('task').innerHTML='';return} if(S.round==11 && !S.finale?.started){$('task').innerHTML=renderFinaleWarning();return}let it=item(),html=''; if(S.round==1)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><div class="wallRiddle">${(it.clues||[]).map(x=>'▸ '+x).join('<br>')}</div>`; if(S.round==2){let sy=it.symbols||[];html=`<p>${it.story||''}</p><div class="safeGrid">${sy.map(x=>`<button class="safeSymbol" onclick="emit('player:symbol','${x.id}')"><span>${x.icon}</span><small>${x.label}</small></button>`).join('')}</div>${symbolFakePagesHtml()}`} if(S.round==3)html=`<h3>${it.title||''}</h3><p>${it.question||''}</p>${it.audioUrl?`<audio controls src="${it.audioUrl}"></audio>`:''}`; if(S.round==4)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><p class="small">${it.instruction||'Findet die gelogene Aussage und gebt den 4-stelligen Code im Code-Terminal ein.'}</p><div class="lieCodeList">${(it.statements||[]).map((x,i)=>lieStatementRow(x,i)).join('')}</div>`; if(S.round==5)html=`<h3>${it.title||''}</h3><p>${it.story||''}</p><div class="letterRiddle">${(it.letters||[]).join(' - ')}</div><p>${it.visibleHint||''}</p><input id="word" placeholder="Lösungswort"><input id="num" placeholder="Zahlencode"><button class="good" onclick="emit('player:anagram',{word:$('word').value,number:$('num').value})">Absenden</button>`; if(S.round==6)html=renderBomb(); if(S.round==7)html=renderLaser(it); if(S.round==8)html=renderPotion(it); if(S.round==9)html=renderVentilation(it); if(S.round==10)html=renderElevator(it); if(S.round==11)html=renderMemory(it); $('task').innerHTML=html;}
+function isTeamChef(){return S.teamChefId===socket.id}
+function lockedButtonAttrs(){return isTeamChef()?'':'disabled title="Nur der Teamchef darf das bedienen"'}
+function lockedSelectAttrs(){return isTeamChef()?'':'disabled title="Nur der Teamchef darf das bedienen"'}
+function teamchefSharedNotice(actionText){
+  if(isTeamChef()) return `<div class="roleNotice teamchefNotice">👑 Du bist Teamchef. ${actionText}</div>`;
+  return `<div class="roleNotice helperNotice">👀 Du bist Helfer. Du siehst die gleiche Hauptansicht wie der Teamchef, darfst aber nichts anklicken oder ändern. Lies zusätzlich die Hinweise und hilf dem Teamchef über Discord.</div>`;
+}
+function helperPages(pages,title){return `<h3>${title||'Hinweise'}</h3>${(pages||[]).map(p=>`<details class="card fakePage"><summary>${p.buttonText||'Seite öffnen'}</summary><h3>${p.title||''}</h3><p>${p.content||''}</p></details>`).join('')}`}
+function waitForChefBox(){return `<div class="bombLocked"><h2>🔒 Warten auf Teamchef</h2><p>Der Admin muss zuerst einen Teamchef bestimmen.</p><p class="small">Danach sehen alle Spieler die Hauptansicht. Nur der Teamchef darf sie bedienen. Die anderen Spieler sehen zusätzlich die Hinweise.</p></div>`}
+
 function renderBomb(){
-  if(!S.teamChefId){
-    return `<div class="bombLocked"><h2>🔒 Bombenraum gesperrt</h2><p>Wartet, bis der Admin einen Teamchef bestimmt hat.</p><p class="small">Erst danach sieht der Teamchef die Bombe. Alle anderen Spieler bekommen nur die Fake-Seiten mit Hinweisen.</p></div>`;
-  }
-  const meIsChef = S.teamChefId === socket.id;
+  if(!S.teamChefId) return waitForChefBox();
   let w=S.data.wireBomb||{}, wires=w.wires||[];
-  if(meIsChef){
-    return `<div class="roleNotice teamchefNotice">👑 Du bist Teamchef. Du siehst die Bombe und musst die Kabel in der richtigen Reihenfolge durchtrennen.</div><div class="bombDevice"><div class="bombShell"><div class="bombTop"><span></span><span></span></div><div class="bombScreen"><b id="bombTimerDisplay">${fmt(S.bomb?.timer||0)}</b><small>BOMBENZEIT · PHASE ${S.bomb?.phase||1} · FEHLER ${S.bomb?.errors||0}</small></div><div class="wireBoard">${wires.map(x=>`<button class="realWire" style="--wire:${x.color}" onclick="emit('player:wire','${x.id}')"><span></span><b>${x.label}</b><em>durchtrennen</em></button>`).join('')}</div></div></div>`;
-  }
-  return `<div class="roleNotice helperNotice">📄 Du bist Helfer. Du siehst keine Bombe, sondern nur die Fake-Seiten mit Hinweisen. Erkläre dem Teamchef über Discord, was er tun soll.</div><h3>Fake-Seiten mit Hinweisen</h3>${(S.data.fakePages||[]).map(p=>`<details class="card fakePage"><summary>${p.buttonText}</summary><h3>${p.title}</h3><p>${p.content}</p></details>`).join('')}`;
+  const notice=teamchefSharedNotice('Durchtrenne die Kabel in der richtigen Reihenfolge.');
+  const bomb=`<div class="bombDevice ${isTeamChef()?'':'spectatorDevice'}"><div class="bombShell"><div class="bombTop"><span></span><span></span></div><div class="bombScreen"><b id="bombTimerDisplay">${fmt(S.bomb?.timer||0)}</b><small>BOMBENZEIT · PHASE ${S.bomb?.phase||1} · FEHLER ${S.bomb?.errors||0}</small></div><div class="wireBoard">${wires.map(x=>`<button class="realWire" style="--wire:${x.color}" ${lockedButtonAttrs()} onclick="emit('player:wire','${x.id}')"><span></span><b>${x.label}</b><em>${isTeamChef()?'durchtrennen':'gesperrt'}</em></button>`).join('')}</div></div></div>`;
+  const pages=!isTeamChef()?helperPages(S.data.fakePages||[],'Fake-Seiten mit Hinweisen'):'';
+  return `${notice}${bomb}${pages}`;
+}
+
+function renderLaser(it){
+  if(!S.teamChefId)return waitForChefBox();
+  const notice=teamchefSharedNotice('Richte die Spiegel aus.');
+  const panel=`<h3>${it.title||'Laser-Raum'}</h3><p>${it.instructionChef||''}</p><div class="laserBox ${isTeamChef()?'':'spectatorDevice'}">${(it.mirrors||[]).map(m=>`<label class="miniControl"><b>${m.label}</b><select id="laser_${m.id}" ${lockedSelectAttrs()}>${(m.options||[]).map(o=>`<option value="${o}">${o}</option>`).join('')}</select></label>`).join('')}</div>${isTeamChef()?`<button class="good" onclick="submitLaser()">Laser prüfen</button>`:`<p class="small">🔒 Nur der Teamchef kann die Spiegel einstellen.</p>`}`;
+  const pages=!isTeamChef()?helperPages(it.fakePages,'Sicherheitsprotokolle'):'';
+  return `${notice}${panel}${pages}`;
+}
+function submitLaser(){let it=item(),settings={};(it.mirrors||[]).forEach(m=>settings[m.id]=$('laser_'+m.id).value);emit('player:laserSubmit',settings)}
+
+function renderPotion(it){
+  if(!S.teamChefId)return waitForChefBox();
+  const notice=teamchefSharedNotice('Wähle den sicheren Trank aus.');
+  const panel=`<h3>${it.title||'Giftiger Trank'}</h3><p>${it.instructionChef||''}</p><div class="bottleGrid ${isTeamChef()?'':'spectatorDevice'}">${(it.bottles||[]).map(b=>`<button class="bottleCard" ${lockedButtonAttrs()} onclick="emit('player:potionChoose','${b.id}')"><b>${b.label}</b><br>${b.color||''}<br><small>${b.shape||''}</small></button>`).join('')}</div>${!isTeamChef()?`<p class="small">🔒 Nur der Teamchef kann eine Flasche auswählen.</p>`:''}`;
+  const pages=!isTeamChef()?helperPages(it.fakePages,'Laborberichte'):'';
+  return `${notice}${panel}${pages}`;
+}
+
+function renderVentilation(it){
+  if(!S.teamChefId)return waitForChefBox();
+  const notice=teamchefSharedNotice('Stelle die Ventile ein.');
+  const panel=`<h3>${it.title||'Lüftungssystem'}</h3><p>${it.instructionChef||''}</p><div class="ventBox ${isTeamChef()?'':'spectatorDevice'}">${(it.valves||[]).map(v=>`<label class="miniControl"><b>${v.label}</b><select id="vent_${v.id}" ${lockedSelectAttrs()}>${(v.options||[]).map(o=>`<option value="${o}">${o}${String(o).match(/^\d+$/)?'%':''}</option>`).join('')}</select></label>`).join('')}</div>${isTeamChef()?`<button class="good" onclick="submitVentilation()">Lüftung prüfen</button>`:`<p class="small">🔒 Nur der Teamchef kann die Ventile einstellen.</p>`}`;
+  const pages=!isTeamChef()?helperPages(it.fakePages,'Wartungsberichte'):'';
+  return `${notice}${panel}${pages}`;
+}
+function submitVentilation(){let it=item(),settings={};(it.valves||[]).forEach(v=>settings[v.id]=$('vent_'+v.id).value);emit('player:ventilationSubmit',settings)}
+
+function renderElevator(it){
+  if(!S.teamChefId)return waitForChefBox();
+  let progress=S.elevator?.progress||[];
+  const notice=teamchefSharedNotice('Drücke die Etagen in der richtigen Reihenfolge.');
+  const panel=`<h3>${it.title||'Fahrstuhl'}</h3><p>${it.instructionChef||''}</p><p><b>Eingabe:</b> ${progress.join(' → ')||'-'}</p><div class="elevatorPanel ${isTeamChef()?'':'spectatorDevice'}">${(it.floors||[]).map(f=>`<button ${lockedButtonAttrs()} onclick="emit('player:elevatorPress','${f.id}')">${f.label}</button>`).join('')}</div>${!isTeamChef()?`<p class="small">🔒 Nur der Teamchef kann die Etagen drücken.</p>`:''}`;
+  const pages=!isTeamChef()?helperPages(it.fakePages,'Etagen-Hinweise'):'';
+  return `${notice}${panel}${pages}`;
 }
 
 function renderFinaleWarning(){
