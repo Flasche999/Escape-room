@@ -190,13 +190,6 @@ io.on('connection', socket => {
     if(S.buzzedId===socket.id) S.buzzedId='';
     broadcast();
   });
-  socket.on('player:buzz', () => {
-    if(!S.gameStarted || !S.buzzerEnabled || S.buzzedId || !isChef(socket.id)) return;
-    S.buzzedId = socket.id;
-    S.message = 'BUZZ!';
-    io.emit('playSound','buzzer');
-    broadcast();
-  });
   socket.on('player:note', txt => { S.notes[socket.id] = String(txt||'').slice(0,2000); broadcast(); });
   socket.on('player:code', ({id, code}) => {
     if(!S.gameStarted) return;
@@ -283,10 +276,6 @@ io.on('connection', socket => {
   socket.on('admin:next', () => { S.itemIndex++; S.revealed=false; broadcast(); });
   socket.on('admin:prev', () => { S.itemIndex=Math.max(0,S.itemIndex-1); S.revealed=false; broadcast(); });
   socket.on('admin:reveal', () => { S.revealed=!S.revealed; broadcast(); });
-  socket.on('admin:setBuzzerEnabled', v => { S.buzzerEnabled=!!v; broadcast(); });
-  socket.on('admin:setTeamChefRequired', v => { S.teamChefRequired=!!v; broadcast(); });
-  socket.on('admin:setTeamChef', id => { S.teamChefId=id||''; broadcast(); });
-  socket.on('admin:resetBuzzer', () => { S.buzzedId=''; broadcast(); });
   socket.on('admin:winner', id => { const p=S.players.find(x=>x.id===id); S.message='🏆 Gewinner: '+(p?.name||'Spieler'); io.emit('winner', p||{}); io.emit('playSound','winner'); broadcast(); });
   socket.on('admin:unlockCode', id => { unlock(id); broadcast(); });
   socket.on('admin:resetCodes', () => { S.locks={}; S.codeEntries={}; broadcast(); });
