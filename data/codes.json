@@ -1,0 +1,28 @@
+[
+  {
+    "id": "tuer1",
+    "round": 1,
+    "title": "Tür 1",
+    "code": "8461",
+    "hint": "Code aus dem Wandrätsel",
+    "requireAllPlayers": true,
+    "successText": "Tür 1 bestätigt."
+  },
+  {
+    "id": "tuer5_buchstaben",
+    "round": 5,
+    "title": "Buchstaben-Tür",
+    "code": "156514",
+    "hint": "Alphabet-Zahlencode",
+    "requireAllPlayers": false
+  },
+  {
+    "id": "final_exit",
+    "round": 7,
+    "title": "Finaler Exit-Code",
+    "code": "6273",
+    "hint": "Findet die Zahlenkarten im Memory und sortiert sie nach Kartennummer.",
+    "requireAllPlayers": false,
+    "successText": "Die Tür öffnet sich! Ihr seid entkommen!"
+  }
+]

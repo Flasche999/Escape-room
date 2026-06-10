@@ -1,0 +1,14 @@
+[
+  {
+    "title": "Wer lügt?",
+    "story": "Drei Aussagen stehen an der Wand. Eine davon ist falsch.",
+    "statements": [
+      "A: Der rote Code ist sicher.",
+      "B: Blau kommt vor Gelb.",
+      "C: Schwarz ist das letzte Kabel."
+    ],
+    "liar": "C",
+    "answer": "C",
+    "explanation": "Schwarz ist nicht das letzte Kabel."
+  }
+]
