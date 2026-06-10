@@ -1,0 +1,13 @@
+{
+  "maxErrors": 3,
+  "timerSeconds": 1800,
+  "errorPenaltySeconds": 60,
+  "phase2Sequence": [
+    "▲",
+    "●",
+    "◆"
+  ],
+  "phase3Code": "7391",
+  "bombTimerSeconds": 300,
+  "bombPenaltySeconds": 20
+}

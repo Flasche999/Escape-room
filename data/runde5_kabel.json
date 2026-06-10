@@ -1,0 +1,38 @@
+{
+  "title": "Kabelbombe",
+  "adminExplanation": "Die richtige Reihenfolge kann hier geändert werden.",
+  "wires": [
+    {
+      "id": "blue",
+      "label": "Blau",
+      "color": "#1f70ff"
+    },
+    {
+      "id": "yellow",
+      "label": "Gelb",
+      "color": "#d8b400"
+    },
+    {
+      "id": "black",
+      "label": "Schwarz",
+      "color": "#111111"
+    },
+    {
+      "id": "green",
+      "label": "Grün",
+      "color": "#0ba85a"
+    },
+    {
+      "id": "red",
+      "label": "Rot",
+      "color": "#d71935"
+    }
+  ],
+  "sequence": [
+    "blue",
+    "yellow",
+    "black",
+    "green",
+    "red"
+  ]
+}
